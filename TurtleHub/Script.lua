@@ -761,7 +761,7 @@ Callback = function(val)
                 if v:IsDescendantOf(workspace) then
                     OrionLib:MakeNotification({
 Name = "WARNING",
-Content = "v.Name:gsub("Moving",""):lower().." is coming go hide"",
+Content = v.Name:gsub("Moving",""):lower().." is coming go hide",
 Image = "rbxassetid://",
 Time = 5
 })
@@ -794,9 +794,13 @@ Callback = function(val)
         repeat task.wait() until not flags.noseek
         addconnect:Disconnect()
     end
-end)
+end
+})
 
-window_misc.toggle("delete gates",false,function(val)
+Misc:AddToggle({
+Name = "disable gate",
+Default = false,
+Callback = function(val)
     flags.nogates = val
     
     if val then
