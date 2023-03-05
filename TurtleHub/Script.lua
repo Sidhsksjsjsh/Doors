@@ -29,7 +29,11 @@ function esp(what,color,core,name)
     
     local bill
     local boxes = {}
-    
+    local CF = CFrame.new
+    local LatestRoom = game:GetService("ReplicatedStorage").GameData.LatestRoom
+
+local ChaseStart = game:GetService("ReplicatedStorage").GameData.ChaseStart
+
     for i,v in pairs(parts) do
         if v:IsA("BasePart") then
             local box = Instance.new("BoxHandleAdornment")
@@ -153,6 +157,11 @@ local flags = {
 local DELFLAGS = {table.unpack(flags)}
 local esptable = {doors={},keys={},items={},books={},entity={},chests={},lockers={},people={},gold={}}
 
+local Main = Window:MakeTab({
+Name = "Main",
+Icon = "rbxassetid://",
+PremiumOnly = false
+})
 
 local Player = Window:MakeTab({
 Name = "Player",
@@ -171,6 +180,103 @@ Name = "misc",
 Icon = "rbxassetid://",
 PremiumOnly = false
 })
+
+Main:AddButton({
+Name = "Skip doors 50",
+Callback = function()
+local CurrentDoor = workspace.CurrentRooms[tostring(LatestRoom+1)]:WaitForChild("Door")
+        game.Players.LocalPlayer.Character:PivotTo(CF(CurrentDoor.Door.Position))
+end
+})
+
+Main:AddButton({
+Name = "no jumpscare",
+Callback = function()
+game:GetService("ReplicatedStorage").Bricks.Jumpscare:Destroy()
+end
+})
+
+Main:AddButton({
+Name = "auto win breaker box minigames",
+Callback = function()
+game:GetService("ReplicatedStorage").Bricks.EBF:FireServer()
+end
+})
+
+Main:AddToggle({
+	Name = "Auto skip level",
+	Default = false,
+    Save = false,
+    Flag = "AutoSkip"
+})
+
+Main:AddToggle({
+	Name = "Notify event",
+	Default = false,
+    Save = false,
+    Flag = "PredictToggle"
+})
+
+local NotificationCoroutine = coroutine.create(function()
+    LatestRoom.Changed:Connect(function()
+        FloorIndicator:Set(tostring(LatestRoom.Value))
+        if OrionLib.Flags["PredictToggle"].Value == true then
+            local n = ChaseStart.Value - LatestRoom.Value
+            if 0 < n and n < 4 then
+                OrionLib:MakeNotification({
+                    Name = "Warning!",
+                    Content = "Event in " .. tostring(n) .. " rooms.",
+                    Time = 5
+                })
+            end
+        end
+end)
+end)
+coroutine.resume(NotificationCoroutine)
+
+local AutoSkipCoro = coroutine.create(function()
+        while true do
+            task.wait()
+            pcall(function()
+            if OrionLib.Flags["AutoSkip"].Value == true and game:GetService("ReplicatedStorage").GameData.LatestRoom.Value < 100 then
+                local HasKey = false
+                local LatestRoom = game:GetService("ReplicatedStorage").GameData.LatestRoom.Value
+                local CurrentDoor = workspace.CurrentRooms[tostring(LatestRoom)]:WaitForChild("Door")
+                for i,v in ipairs(CurrentDoor.Parent:GetDescendants()) do
+                    if v.Name == "KeyObtain" then
+                        HasKey = v
+                    end
+                end
+                if HasKey then
+                    game.Players.LocalPlayer.Character:PivotTo(CF(HasKey.Hitbox.Position))
+                    task.wait()
+                    fireproximityprompt(HasKey.ModulePrompt,0)
+                    game.Players.LocalPlayer.Character:PivotTo(CF(CurrentDoor.Door.Position))
+                    task.wait()
+                    fireproximityprompt(CurrentDoor.Lock.UnlockPrompt,0)
+                end
+                if LatestRoom == 50 then
+                    CurrentDoor = workspace.CurrentRooms[tostring(LatestRoom+1)]:WaitForChild("Door")
+                end
+                game.Players.LocalPlayer.Character:PivotTo(CF(CurrentDoor.Door.Position))
+                task.wait()
+                CurrentDoor.ClientOpen:FireServer()
+            elseif OrionLib.Flags["AutoSkip"].Value == true and game:GetService("ReplicatedStorage").GameData.LatestRoom.Value == 100 then
+                local LatestRoom =  workspace.CurrentRooms[tostring(game:GetService("ReplicatedStorage").GameData.LatestRoom.Value)]
+                local ElevatorCar = LatestRoom:WaitForChild("ElevatorCar")
+                local ElevatorBreaker = LatestRoom:WaitForChild("ElevatorBreaker")
+                task.wait(0.2)
+                game.Players.LocalPlayer.Character:PivotTo(CF(ElevatorBreaker.Box.Position))
+                task.wait(0.2)
+                game:GetService("ReplicatedStorage").Bricks.EBF:FireServer()
+                task.wait(0.2)
+                game.Players.LocalPlayer.Character:PivotTo(CF(ElevatorCar.CollisionFloor.Position + Vector3.new(0,2,0)))
+            end
+        end)
+        end
+end)
+coroutine.resume(AutoSkipCoro)
+
 
 Player:AddToggle({
 Name = "Client glow",
