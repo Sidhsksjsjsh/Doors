@@ -210,7 +210,7 @@ Player:AddSlider({
 Name = "walkspeed",
 Min = 0,
 Max = 250,
-Default = 25,
+Default = 16,
 Color = Color3.fromRGB(255,255,255),
 Increment = 1,
 ValueName = "speed",
